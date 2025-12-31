@@ -1,0 +1,766 @@
+# AI-Powered Gold/USD (XAU/USD) Trading System - Complete Implementation Prompt
+
+## Project Overview
+
+Build a complete, production-ready AI-powered trading system for XAU/USD (Gold vs US Dollar) in the Forex market. The system must achieve and maintain 80%+ prediction accuracy through continuous self-improvement without human intervention.
+
+---
+
+## System Architecture
+
+### Technology Stack
+- **Backend**: Python 3.11+
+- **Frontend**: Flutter (PWA - Progressive Web Application)
+- **Database**: PostgreSQL (primary), Redis (caching/real-time), TimescaleDB (time-series data)
+- **Message Queue**: RabbitMQ or Apache Kafka
+- **ML Framework**: TensorFlow/PyTorch, scikit-learn, XGBoost
+- **API Framework**: FastAPI
+- **Containerization**: Docker & Docker Compose
+- **Reverse Proxy**: Nginx
+- **Task Scheduler**: Celery with Redis
+
+### Server Specifications
+- **OS**: Ubuntu 24.04.3 LTS
+- **CPU**: 8 vCPU @ 3.393GHz
+- **RAM**: 16GB
+- **Architecture**: x86_64 (KVM virtualized)
+
+---
+
+## Core System Components
+
+### 1. Data Collection & Aggregation Layer
+
+#### 1.1 Market Data Collector
+```
+Location: /backend/data_collectors/
+```
+- **Real-time Price Feed**: WebSocket connections to multiple Forex brokers/data providers
+  - Primary: MetaTrader 5 API integration
+  - Secondary: OANDA API, Interactive Brokers API
+  - Backup: Alpha Vantage, Twelve Data
+- **Historical Data**: Fetch and store OHLCV data (1m, 5m, 15m, 1h, 4h, 1D, 1W timeframes)
+- **Order Book Data**: Level 2 market depth when available
+- **Tick Data**: High-frequency tick data for volatility analysis
+
+#### 1.2 Fundamental News Collector
+```
+Location: /backend/data_collectors/news/
+```
+- **Economic Calendar Integration**:
+  - Forex Factory API/scraper
+  - Investing.com economic calendar
+  - Trading Economics API
+- **News Sources**:
+  - Reuters, Bloomberg, CNBC feeds
+  - Central bank announcements (Fed, ECB, BOE, etc.)
+  - Gold-specific news (mining reports, demand/supply data)
+- **Social Sentiment**:
+  - Twitter/X API for market sentiment
+  - Reddit (r/forex, r/gold, r/trading)
+  - StockTwits integration
+- **News Categories to Track**:
+  - Interest rate decisions
+  - Inflation data (CPI, PPI)
+  - Employment reports (NFP, unemployment)
+  - GDP releases
+  - Geopolitical events
+  - Gold demand/supply reports
+  - USD strength indicators (DXY)
+
+#### 1.3 Technical Indicators Engine
+```
+Location: /backend/technical_analysis/
+```
+Implement 50+ technical indicators:
+
+**Trend Indicators**:
+- Moving Averages (SMA, EMA, WMA, VWMA) - multiple periods
+- MACD (Moving Average Convergence Divergence)
+- ADX (Average Directional Index)
+- Parabolic SAR
+- Ichimoku Cloud
+- Supertrend
+
+**Momentum Indicators**:
+- RSI (Relative Strength Index)
+- Stochastic Oscillator
+- CCI (Commodity Channel Index)
+- Williams %R
+- ROC (Rate of Change)
+- MFI (Money Flow Index)
+
+**Volatility Indicators**:
+- Bollinger Bands
+- ATR (Average True Range)
+- Keltner Channels
+- Donchian Channels
+- Standard Deviation
+- Historical Volatility
+
+**Volume Indicators**:
+- OBV (On-Balance Volume)
+- Volume Profile
+- VWAP (Volume Weighted Average Price)
+- Accumulation/Distribution
+- Chaikin Money Flow
+
+**Support/Resistance**:
+- Pivot Points (Standard, Fibonacci, Camarilla)
+- Fibonacci Retracements & Extensions
+- Dynamic S/R levels
+- Round number levels
+
+**Pattern Recognition**:
+- Candlestick patterns (50+ patterns)
+- Chart patterns (Head & Shoulders, Triangles, Wedges, etc.)
+- Harmonic patterns (Gartley, Butterfly, Bat, Crab)
+- Elliott Wave analysis
+
+---
+
+### 2. AI/ML Engine
+
+#### 2.1 Model Architecture
+```
+Location: /backend/ml_engine/
+```
+
+**Primary Prediction Models**:
+
+1. **LSTM Network** (Long Short-Term Memory)
+   - For sequential price prediction
+   - Multiple layers with attention mechanism
+   - Input: 100+ features, multiple timeframes
+
+2. **Transformer Model**
+   - Self-attention for pattern recognition
+   - Multi-head attention for different aspects
+   - Positional encoding for time-series
+
+3. **XGBoost/LightGBM Ensemble**
+   - For classification (Buy/Sell/Hold)
+   - Feature importance analysis
+   - Fast inference for real-time decisions
+
+4. **CNN (Convolutional Neural Network)**
+   - Chart pattern recognition from images
+   - Multi-timeframe chart analysis
+
+5. **Reinforcement Learning Agent**
+   - Deep Q-Network (DQN) for trade execution
+   - Proximal Policy Optimization (PPO) for strategy optimization
+   - Reward function based on risk-adjusted returns
+
+6. **NLP Models for News Analysis**
+   - BERT/FinBERT for sentiment analysis
+   - Named Entity Recognition for event extraction
+   - News impact prediction model
+
+#### 2.2 Feature Engineering Pipeline
+```
+Location: /backend/ml_engine/features/
+```
+- Technical indicator features (normalized)
+- Price action features (candlestick encodings)
+- Time-based features (hour, day, session, month)
+- Volatility regime features
+- Correlation features (DXY, S&P500, Oil, etc.)
+- Sentiment scores (aggregated from multiple sources)
+- Economic indicator features
+- Market microstructure features
+
+#### 2.3 Model Training Pipeline
+```
+Location: /backend/ml_engine/training/
+```
+- Automated data preprocessing
+- Walk-forward validation
+- Hyperparameter optimization (Optuna/Ray Tune)
+- Cross-validation with time-series splits
+- Model versioning (MLflow)
+- A/B testing framework for models
+- Automated retraining triggers
+
+#### 2.4 Self-Improvement System
+```
+Location: /backend/ml_engine/auto_improve/
+```
+- **Performance Monitoring**: Track accuracy, precision, recall, profit factor
+- **Drift Detection**: Monitor for data/concept drift
+- **Automated Retraining**: Trigger retraining when performance degrades
+- **Ensemble Weight Optimization**: Dynamically adjust model weights
+- **Feature Selection Evolution**: Genetic algorithm for feature optimization
+- **Hyperparameter Auto-tuning**: Continuous optimization
+- **Strategy Mutation**: Generate and test new strategy variations
+- **Reinforcement Learning from Trading Results**: Learn from actual trade outcomes
+
+---
+
+### 3. Trading Strategy Engine
+
+#### 3.1 Strategy Types
+```
+Location: /backend/strategies/
+```
+
+**Volatility Trading Strategies**:
+- Breakout trading (volatility expansion)
+- Mean reversion (volatility contraction)
+- Straddle-like entries during news events
+- ATR-based position sizing
+- Volatility regime switching
+
+**Investment/Position Trading**:
+- Trend following (multi-week positions)
+- Fundamental-based positioning
+- Carry trade considerations
+- Seasonal patterns exploitation
+- Macro-driven positioning
+
+**Scalping Strategies**:
+- High-frequency pattern recognition
+- Order flow analysis
+- Spread capture
+- Quick momentum plays
+
+**Swing Trading**:
+- Multi-day trend captures
+- Support/Resistance bounces
+- Pattern completion trades
+- Divergence-based entries
+
+#### 3.2 Risk Management System
+```
+Location: /backend/risk_management/
+```
+- **Position Sizing**: Kelly Criterion, Fixed Fractional, Volatility-adjusted
+- **Stop Loss Types**: Fixed, ATR-based, Trailing, Time-based
+- **Take Profit**: Multiple targets, Trailing TP, R:R based
+- **Maximum Drawdown Control**: Daily, Weekly, Monthly limits
+- **Correlation Management**: Avoid over-exposure
+- **Exposure Limits**: Per trade, total portfolio
+- **Risk per Trade**: Maximum 1-2% of capital
+- **Margin Management**: Maintain safe margin levels
+
+#### 3.3 Trade Execution Engine
+```
+Location: /backend/execution/
+```
+- **Order Types**: Market, Limit, Stop, Stop-Limit
+- **Smart Order Routing**: Best execution across brokers
+- **Slippage Control**: Maximum slippage tolerance
+- **Partial Fill Handling**: Manage incomplete orders
+- **Retry Logic**: Automatic retry on failures
+- **Latency Optimization**: Sub-second execution
+
+---
+
+### 4. Market Psychology Analysis
+
+#### 4.1 Sentiment Analysis Engine
+```
+Location: /backend/sentiment/
+```
+- **Fear & Greed Index**: Custom calculation for gold market
+- **Commitment of Traders (COT) Analysis**: CFTC data parsing
+- **Options Market Sentiment**: Put/Call ratios, IV analysis
+- **Retail vs Institutional Positioning**: Broker sentiment data
+- **News Sentiment Aggregation**: Weighted sentiment scores
+- **Social Media Sentiment**: Real-time social analysis
+
+#### 4.2 Market Regime Detection
+```
+Location: /backend/market_regime/
+```
+- **Trending vs Ranging Detection**: HMM-based regime classification
+- **Volatility Regime**: Low/Medium/High volatility states
+- **Risk-On/Risk-Off Detection**: Market mood classification
+- **Session Analysis**: Asian/London/NY session characteristics
+- **Correlation Regime**: Inter-market correlation states
+
+---
+
+### 5. Backend API Service
+
+#### 5.1 FastAPI Application Structure
+```
+Location: /backend/api/
+```
+
+**Endpoints**:
+
+```
+/api/v1/
+├── auth/
+│   ├── POST /login
+│   ├── POST /register
+│   ├── POST /refresh
+│   └── POST /logout
+├── market/
+│   ├── GET /price/current
+│   ├── GET /price/history
+│   ├── GET /orderbook
+│   ├── WS /price/stream
+│   └── GET /indicators
+├── signals/
+│   ├── GET /current
+│   ├── GET /history
+│   ├── WS /stream
+│   └── GET /performance
+├── trades/
+│   ├── GET /open
+│   ├── GET /history
+│   ├── POST /execute
+│   ├── PUT /{id}/modify
+│   └── DELETE /{id}/close
+├── portfolio/
+│   ├── GET /summary
+│   ├── GET /performance
+│   ├── GET /risk-metrics
+│   └── GET /equity-curve
+├── news/
+│   ├── GET /latest
+│   ├── GET /calendar
+│   ├── GET /sentiment
+│   └── GET /impact-analysis
+├── ai/
+│   ├── GET /predictions
+│   ├── GET /model-performance
+│   ├── GET /feature-importance
+│   └── GET /confidence-levels
+├── settings/
+│   ├── GET /risk-params
+│   ├── PUT /risk-params
+│   ├── GET /strategies
+│   └── PUT /strategies
+└── admin/
+    ├── GET /system-status
+    ├── POST /retrain-model
+    ├── GET /logs
+    └── GET /metrics
+```
+
+#### 5.2 WebSocket Services
+- Real-time price streaming
+- Live signal updates
+- Trade execution notifications
+- System alerts and notifications
+
+---
+
+### 6. Flutter PWA Frontend
+
+#### 6.1 Application Structure
+```
+Location: /frontend/
+```
+
+```
+lib/
+├── main.dart
+├── app/
+│   ├── app.dart
+│   ├── routes.dart
+│   └── theme.dart
+├── core/
+│   ├── constants/
+│   ├── utils/
+│   ├── errors/
+│   └── network/
+├── data/
+│   ├── models/
+│   ├── repositories/
+│   ├── datasources/
+│   └── providers/
+├── domain/
+│   ├── entities/
+│   ├── repositories/
+│   └── usecases/
+├── presentation/
+│   ├── screens/
+│   │   ├── dashboard/
+│   │   ├── trading/
+│   │   ├── signals/
+│   │   ├── portfolio/
+│   │   ├── news/
+│   │   ├── analysis/
+│   │   ├── settings/
+│   │   └── auth/
+│   ├── widgets/
+│   │   ├── charts/
+│   │   ├── indicators/
+│   │   ├── cards/
+│   │   └── common/
+│   └── blocs/
+└── services/
+    ├── api_service.dart
+    ├── websocket_service.dart
+    ├── notification_service.dart
+    └── storage_service.dart
+```
+
+#### 6.2 Key Screens
+
+1. **Dashboard**
+   - Current XAU/USD price with live updates
+   - Quick portfolio overview
+   - Active signals summary
+   - Recent trades
+   - Market sentiment gauge
+   - Upcoming economic events
+
+2. **Trading View**
+   - Interactive candlestick chart (multiple timeframes)
+   - Technical indicators overlay
+   - Drawing tools
+   - Order entry panel
+   - Open positions list
+   - One-click trading
+
+3. **Signals Screen**
+   - Current AI signals with confidence levels
+   - Signal history with performance
+   - Signal breakdown (technical, fundamental, sentiment)
+   - Entry, SL, TP levels
+   - Risk/Reward visualization
+
+4. **Portfolio Screen**
+   - Equity curve chart
+   - Performance metrics (Win rate, Profit factor, Sharpe, etc.)
+   - Trade history with filters
+   - Risk analytics
+   - Drawdown analysis
+
+5. **News & Analysis**
+   - Live news feed
+   - Economic calendar
+   - Sentiment analysis visualization
+   - News impact predictions
+   - Fundamental analysis summary
+
+6. **AI Insights**
+   - Model confidence levels
+   - Feature importance charts
+   - Prediction accuracy tracking
+   - Model performance metrics
+   - Self-improvement progress
+
+7. **Settings**
+   - Risk parameters configuration
+   - Strategy selection
+   - Notification preferences
+   - Account settings
+   - API connections
+
+#### 6.3 Charts & Visualization
+- Use `fl_chart` or `syncfusion_flutter_charts` for charts
+- Candlestick charts with zoom and pan
+- Real-time updates via WebSocket
+- Indicator overlays
+- Drawing tools for analysis
+
+---
+
+### 7. Database Schema
+
+#### 7.1 PostgreSQL Tables
+```
+Location: /backend/database/
+```
+
+```sql
+-- Core Tables
+CREATE TABLE users (...)
+CREATE TABLE accounts (...)
+CREATE TABLE api_keys (...)
+
+-- Market Data
+CREATE TABLE ohlcv_data (...)  -- TimescaleDB hypertable
+CREATE TABLE tick_data (...)    -- TimescaleDB hypertable
+CREATE TABLE orderbook_snapshots (...)
+
+-- Trading
+CREATE TABLE trades (...)
+CREATE TABLE orders (...)
+CREATE TABLE positions (...)
+CREATE TABLE signals (...)
+
+-- AI/ML
+CREATE TABLE model_versions (...)
+CREATE TABLE predictions (...)
+CREATE TABLE model_performance (...)
+CREATE TABLE feature_importance (...)
+CREATE TABLE training_runs (...)
+
+-- News & Sentiment
+CREATE TABLE news_articles (...)
+CREATE TABLE economic_events (...)
+CREATE TABLE sentiment_scores (...)
+
+-- System
+CREATE TABLE system_logs (...)
+CREATE TABLE performance_metrics (...)
+CREATE TABLE alerts (...)
+```
+
+---
+
+### 8. DevOps & Infrastructure
+
+#### 8.1 Docker Configuration
+```
+Location: /docker/
+```
+
+```yaml
+# docker-compose.yml structure
+services:
+  - backend (FastAPI)
+  - frontend (Flutter Web/Nginx)
+  - postgres (TimescaleDB)
+  - redis
+  - rabbitmq
+  - celery-worker
+  - celery-beat
+  - ml-training (GPU-enabled if available)
+  - nginx (reverse proxy)
+  - prometheus (monitoring)
+  - grafana (dashboards)
+```
+
+#### 8.2 CI/CD Pipeline
+- GitHub Actions / GitLab CI
+- Automated testing
+- Docker image building
+- Deployment automation
+- Model versioning and deployment
+
+#### 8.3 Monitoring & Alerting
+- Prometheus metrics collection
+- Grafana dashboards
+- System health monitoring
+- Trading performance alerts
+- Model degradation alerts
+- Error tracking (Sentry)
+
+---
+
+### 9. Security Implementation
+
+- JWT authentication with refresh tokens
+- API rate limiting
+- Input validation and sanitization
+- Encrypted database connections
+- HTTPS everywhere
+- Secrets management (environment variables / Vault)
+- Audit logging
+- IP whitelisting for trading operations
+- 2FA for critical operations
+
+---
+
+### 10. Implementation Phases
+
+#### Phase 1: Foundation (Week 1-2)
+1. Set up project structure
+2. Configure Docker environment
+3. Set up PostgreSQL with TimescaleDB
+4. Implement basic FastAPI structure
+5. Create Flutter project scaffold
+6. Set up Redis and Celery
+
+#### Phase 2: Data Layer (Week 3-4)
+1. Implement market data collectors
+2. Set up news and sentiment collectors
+3. Build technical indicators library
+4. Create data storage pipelines
+5. Implement WebSocket connections
+
+#### Phase 3: AI/ML Core (Week 5-7)
+1. Build feature engineering pipeline
+2. Implement LSTM model
+3. Implement Transformer model
+4. Implement XGBoost ensemble
+5. Build NLP sentiment model
+6. Create model training pipeline
+7. Implement MLflow tracking
+
+#### Phase 4: Trading Engine (Week 8-9)
+1. Implement strategy framework
+2. Build risk management system
+3. Create trade execution engine
+4. Implement backtesting system
+5. Build paper trading mode
+
+#### Phase 5: Self-Improvement System (Week 10-11)
+1. Implement performance monitoring
+2. Build drift detection
+3. Create automated retraining
+4. Implement ensemble optimization
+5. Build strategy evolution system
+
+#### Phase 6: Frontend Development (Week 12-14)
+1. Build authentication screens
+2. Implement dashboard
+3. Create trading view with charts
+4. Build signals screen
+5. Implement portfolio analytics
+6. Create news and analysis screens
+7. Build settings and admin panels
+
+#### Phase 7: Integration & Testing (Week 15-16)
+1. End-to-end integration
+2. Performance testing
+3. Security audit
+4. Load testing
+5. Bug fixes and optimization
+
+#### Phase 8: Deployment & Monitoring (Week 17-18)
+1. Production deployment
+2. Set up monitoring and alerting
+3. Documentation
+4. User acceptance testing
+5. Go-live with paper trading
+6. Transition to live trading
+
+---
+
+### 11. File Structure Overview
+
+```
+/home/hasan/projects/f/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   └── dependencies.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── routes/
+│   │   └── middleware/
+│   ├── data_collectors/
+│   │   ├── market/
+│   │   ├── news/
+│   │   └── sentiment/
+│   ├── technical_analysis/
+│   │   ├── indicators/
+│   │   └── patterns/
+│   ├── ml_engine/
+│   │   ├── models/
+│   │   ├── features/
+│   │   ├── training/
+│   │   └── auto_improve/
+│   ├── strategies/
+│   │   ├── base.py
+│   │   ├── volatility/
+│   │   ├── trend/
+│   │   └── swing/
+│   ├── risk_management/
+│   ├── execution/
+│   ├── sentiment/
+│   ├── market_regime/
+│   ├── database/
+│   │   ├── models/
+│   │   └── migrations/
+│   ├── services/
+│   ├── utils/
+│   ├── tests/
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── pyproject.toml
+├── frontend/
+│   ├── lib/
+│   │   ├── main.dart
+│   │   ├── app/
+│   │   ├── core/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   ├── presentation/
+│   │   └── services/
+│   ├── web/
+│   ├── test/
+│   ├── pubspec.yaml
+│   └── Dockerfile
+├── docker/
+│   ├── docker-compose.yml
+│   ├── docker-compose.prod.yml
+│   └── nginx/
+├── scripts/
+│   ├── setup.sh
+│   ├── train_models.py
+│   └── backtest.py
+├── docs/
+│   ├── API.md
+│   ├── ARCHITECTURE.md
+│   └── DEPLOYMENT.md
+├── .github/
+│   └── workflows/
+├── .env.example
+├── Makefile
+└── README.md
+```
+
+---
+
+### 12. Key Performance Indicators (KPIs)
+
+**Trading Performance**:
+- Win Rate: Target 80%+
+- Profit Factor: Target 2.0+
+- Sharpe Ratio: Target 2.0+
+- Maximum Drawdown: <15%
+- Average R:R: 1:2 minimum
+
+**System Performance**:
+- API Response Time: <100ms
+- WebSocket Latency: <50ms
+- Model Inference Time: <500ms
+- System Uptime: 99.9%
+
+**AI Performance**:
+- Prediction Accuracy: 80%+
+- Sentiment Analysis Accuracy: 85%+
+- Pattern Recognition Accuracy: 75%+
+
+---
+
+### 13. Success Criteria
+
+1. System achieves 80%+ prediction accuracy on out-of-sample data
+2. Profitable performance over 3-month forward testing period
+3. Self-improvement mechanism shows measurable accuracy gains
+4. System operates 24/5 without human intervention
+5. All risk management rules are enforced automatically
+6. Frontend provides real-time updates with <1s latency
+7. System recovers automatically from failures
+8. Complete audit trail for all trading decisions
+
+---
+
+### 14. Important Notes
+
+1. **Start with Paper Trading**: Always test with paper trading before live
+2. **Risk Management First**: Never bypass risk management rules
+3. **Gradual Rollout**: Start with small position sizes
+4. **Continuous Monitoring**: Monitor system 24/7 initially
+5. **Regulatory Compliance**: Ensure compliance with forex regulations
+6. **Data Quality**: Validate all data sources regularly
+7. **Model Monitoring**: Watch for model degradation constantly
+8. **Backup Systems**: Have manual override capabilities
+
+---
+
+## BEGIN IMPLEMENTATION
+
+Start by creating the project structure and implementing the foundational components. Follow the phases outlined above, beginning with:
+
+1. Create the directory structure
+2. Set up Docker environment with all required services
+3. Initialize the Python backend with FastAPI
+4. Initialize the Flutter frontend project
+5. Set up the database schema
+6. Implement the first data collector (market prices)
+
+Proceed systematically through each component, ensuring proper testing at each stage. The goal is a fully autonomous, self-improving trading system that achieves 80%+ accuracy on XAU/USD trading signals.

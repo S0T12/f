@@ -1,0 +1,70 @@
+# Core
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy[asyncio]==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Redis
+redis==5.0.1
+
+# Authentication
+pyjwt==2.8.0
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+
+# HTTP Client
+httpx==0.26.0
+aiohttp==3.9.1
+
+# Task Queue
+celery==5.3.4
+
+# ML/AI
+numpy==1.26.3
+pandas==2.1.4
+scikit-learn==1.3.2
+xgboost==2.0.3
+lightgbm==4.2.0
+tensorflow==2.15.0
+torch==2.1.2
+transformers==4.36.2
+optuna==3.5.0
+
+# Technical Analysis
+ta-lib==0.4.28
+pandas-ta==0.3.14b
+
+# NLP
+nltk==3.8.1
+textblob==0.17.1
+
+# Data Processing
+scipy==1.11.4
+statsmodels==0.14.1
+
+# Monitoring
+prometheus-fastapi-instrumentator==6.1.0
+sentry-sdk[fastapi]==1.39.1
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+orjson==3.9.10
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+httpx==0.26.0
+
+# Logging
+loguru==0.7.2
+
+# WebSocket
+websockets==12.0
