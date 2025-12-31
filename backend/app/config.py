@@ -4,6 +4,7 @@ Application Configuration
 Central configuration management using Pydantic Settings.
 """
 
+import os
 from functools import lru_cache
 from typing import List, Optional, Union
 from pydantic_settings import BaseSettings
@@ -23,15 +24,12 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8080"]
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
     
-    @field_validator('ALLOWED_ORIGINS', mode='before')
-    @classmethod
-    def parse_allowed_origins(cls, v):
-        """Parse ALLOWED_ORIGINS from string or list."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(',')]
-        return v
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        """Get ALLOWED_ORIGINS as a list."""
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(',')]
     
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://trading:trading@localhost:5432/trading_db"
