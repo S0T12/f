@@ -83,10 +83,33 @@ class Settings(BaseSettings):
     PROMETHEUS_ENABLED: bool = True
     SENTRY_DSN: Optional[str] = None
     
+    # Additional trading settings
+    TRADING_SYMBOL: str = "XAU_USD"
+    DEFAULT_TIMEFRAME: str = "H1"
+    MAX_POSITION_SIZE: float = 0.1
+    MAX_DAILY_LOSS: float = 0.02
+    RISK_PER_TRADE: float = 0.01
+    
+    # Additional ML settings
+    MODEL_RETRAIN_INTERVAL: int = 86400
+    
+    # Server settings (these are mapped to API_HOST/API_PORT)
+    SERVER_HOST: str = "0.0.0.0"
+    SERVER_PORT: int = 8000
+    
+    # Password settings for external services
+    RABBITMQ_PASSWORD: Optional[str] = None
+    REDIS_PASSWORD: Optional[str] = None
+    GRAFANA_PASSWORD: Optional[str] = None
+    JWT_SECRET: Optional[str] = None
+    SECRET_KEY: Optional[str] = None
+    APP_ENV: Optional[str] = None
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra environment variables
 
 
 @lru_cache()
