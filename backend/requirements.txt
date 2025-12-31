@@ -36,8 +36,7 @@ torch>=2.1.0
 transformers>=4.35.0
 optuna>=3.4.0
 
-# Technical Analysis (pandas-ta as alternative to ta-lib)
-pandas-ta>=0.3.14b
+# Technical Analysis - all custom implementations in app/technical_analysis/
 
 # NLP
 nltk==3.8.1
@@ -60,7 +59,6 @@ orjson>=3.9.0
 pytest==7.4.4
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
-httpx==0.26.0
 
 # Logging
 loguru==0.7.2
