@@ -227,10 +227,10 @@ class Trade(Base):
     opened_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
     
-    # Metadata
+    # Additional info
     strategy: Mapped[Optional[str]] = mapped_column(String(100))
     notes: Mapped[Optional[str]] = mapped_column(Text)
-    metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    extra_data: Mapped[dict] = mapped_column(JSON, default=dict)
     
     # Relationships
     account: Mapped["TradingAccount"] = relationship("TradingAccount", back_populates="trades")
