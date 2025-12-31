@@ -4,158 +4,198 @@ services:
   # PostgreSQL with TimescaleDB
   postgres:
     image: timescale/timescaledb:latest-pg15
-    container_name: trading_postgres
+    container_name: xau_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: trading
-      POSTGRES_PASSWORD: trading_password
-      POSTGRES_DB: trading_db
+      POSTGRES_USER: ${POSTGRES_USER:-xau_trading}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xau_secure_password_2024}
+      POSTGRES_DB: ${POSTGRES_DB:-xau_trading_db}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - xau_postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trading -d trading_db"]
+      test: ["CMD-SHELL", "pg_isready -U xau_trading -d xau_trading_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - xau_network
 
   # Redis for caching and pub/sub
   redis:
     image: redis:7-alpine
-    container_name: trading_redis
-    command: redis-server --appendonly yes
+    container_name: xau_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-xau_redis_password_2024}
     volumes:
-      - redis_data:/data
+      - xau_redis_data:/data
     ports:
-      - "6379:6379"
+      - "6380:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-xau_redis_password_2024}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - xau_network
 
   # RabbitMQ for message queue
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: trading_rabbitmq
+    container_name: xau_rabbitmq
+    restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: trading
-      RABBITMQ_DEFAULT_PASS: trading_password
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-xau_trading}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-xau_rabbitmq_password_2024}
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - xau_rabbitmq_data:/var/lib/rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5673:5672"
+      - "15673:15672"
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s
       timeout: 10s
       retries: 5
+    networks:
+      - xau_network
 
   # FastAPI Backend
   backend:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: trading_backend
+    container_name: xau_backend
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://trading:trading_password@postgres:5432/trading_db
-      - REDIS_URL=redis://redis:6379/0
-      - RABBITMQ_URL=amqp://trading:trading_password@rabbitmq:5672/
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-xau_trading}:${POSTGRES_PASSWORD:-xau_secure_password_2024}@postgres:5432/${POSTGRES_DB:-xau_trading_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-xau_trading}:${RABBITMQ_PASSWORD:-xau_rabbitmq_password_2024}@rabbitmq:5672/
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/2
+      - DEBUG=false
     volumes:
-      - ../backend:/app
-      - model_data:/app/models
+      - xau_model_data:/app/models
+      - ../backend/logs:/app/logs
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      rabbitmq:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    networks:
+      - xau_network
 
   # Celery Worker
   celery-worker:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: trading_celery_worker
+    container_name: xau_celery_worker
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://trading:trading_password@postgres:5432/trading_db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-xau_trading}:${POSTGRES_PASSWORD:-xau_secure_password_2024}@postgres:5432/${POSTGRES_DB:-xau_trading_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/2
     volumes:
-      - ../backend:/app
-      - model_data:/app/models
+      - xau_model_data:/app/models
+      - ../backend/logs:/app/logs
     depends_on:
       - backend
       - redis
-    command: celery -A app.celery_app worker --loglevel=info
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+    networks:
+      - xau_network
 
   # Celery Beat (Scheduler)
   celery-beat:
     build:
       context: ../backend
       dockerfile: Dockerfile
-    container_name: trading_celery_beat
+    container_name: xau_celery_beat
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://trading:trading_password@postgres:5432/trading_db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-xau_trading}:${POSTGRES_PASSWORD:-xau_secure_password_2024}@postgres:5432/${POSTGRES_DB:-xau_trading_db}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-xau_redis_password_2024}@redis:6379/2
     volumes:
-      - ../backend:/app
+      - ../backend/logs:/app/logs
     depends_on:
       - celery-worker
     command: celery -A app.celery_app beat --loglevel=info
+    networks:
+      - xau_network
 
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy for PWA + API
   nginx:
     image: nginx:alpine
-    container_name: trading_nginx
+    container_name: xau_nginx
+    restart: unless-stopped
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../frontend/build/web:/usr/share/nginx/html:ro
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
     depends_on:
       - backend
+    networks:
+      - xau_network
 
   # Prometheus Monitoring
   prometheus:
     image: prom/prometheus:latest
-    container_name: trading_prometheus
+    container_name: xau_prometheus
+    restart: unless-stopped
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
+      - xau_prometheus_data:/prometheus
     ports:
-      - "9090:9090"
+      - "9091:9090"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+    networks:
+      - xau_network
 
   # Grafana Dashboard
   grafana:
     image: grafana/grafana:latest
-    container_name: trading_grafana
+    container_name: xau_grafana
+    restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-xau_admin_2024}
+      - GF_SERVER_ROOT_URL=http://156.236.31.98:3002
     volumes:
-      - grafana_data:/var/lib/grafana
+      - xau_grafana_data:/var/lib/grafana
     ports:
-      - "3001:3000"
+      - "3002:3000"
     depends_on:
       - prometheus
+    networks:
+      - xau_network
 
 volumes:
-  postgres_data:
-  redis_data:
-  rabbitmq_data:
-  model_data:
-  prometheus_data:
-  grafana_data:
+  xau_postgres_data:
+  xau_redis_data:
+  xau_rabbitmq_data:
+  xau_model_data:
+  xau_prometheus_data:
+  xau_grafana_data:
+
+networks:
+  xau_network:
+    driver: bridge
+    name: xau_trading_network
