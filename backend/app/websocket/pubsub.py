@@ -10,7 +10,7 @@ import json
 from typing import Optional
 
 from app.websocket.manager import manager
-from app.services.redis_service import redis_service
+from app.services.redis_service import redis_manager
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +35,19 @@ class RedisPubSubListener:
             return
         
         self.running = True
-        self.pubsub = redis_service.redis.pubsub()
+        
+        # Make sure redis is connected
+        if redis_manager.client is None:
+            await redis_manager.connect()
+        
+        self.pubsub = redis_manager.client.pubsub()
         
         # Subscribe to channels
         for channel in self.channels:
             if "*" in channel:
-                self.pubsub.psubscribe(channel)
+                await self.pubsub.psubscribe(channel)
             else:
-                self.pubsub.subscribe(channel)
+                await self.pubsub.subscribe(channel)
         
         logger.info(f"Started Redis PubSub listener for channels: {self.channels}")
         
@@ -53,9 +58,9 @@ class RedisPubSubListener:
         """Stop listening."""
         self.running = False
         if self.pubsub:
-            self.pubsub.unsubscribe()
-            self.pubsub.punsubscribe()
-            self.pubsub.close()
+            await self.pubsub.unsubscribe()
+            await self.pubsub.punsubscribe()
+            await self.pubsub.close()
     
     async def _message_loop(self):
         """Process incoming Redis messages."""

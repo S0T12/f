@@ -15,7 +15,7 @@ from jose import jwt, JWTError
 
 from app.websocket.manager import manager
 from app.config import settings
-from app.services.redis_service import redis_service
+from app.services.redis_service import redis_manager
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ async def handle_message(
     
     elif message_type == "get_latest_price":
         # Get latest price from cache
-        tick = redis_service.get("xauusd:tick:latest")
+        tick = await redis_manager.get("xauusd:tick:latest")
         await manager.send_personal_message(
             {"type": "price", "data": tick},
             connection_id,
@@ -111,7 +111,7 @@ async def handle_message(
     
     elif message_type == "get_latest_signal":
         # Get latest signal from cache
-        signal = redis_service.get("signal:latest")
+        signal = await redis_manager.get("signal:latest")
         await manager.send_personal_message(
             {"type": "signal", "data": signal},
             connection_id,
@@ -119,7 +119,7 @@ async def handle_message(
     
     elif message_type == "get_latest_prediction":
         # Get latest prediction from cache
-        prediction = redis_service.get("prediction:latest")
+        prediction = await redis_manager.get("prediction:latest")
         await manager.send_personal_message(
             {"type": "prediction", "data": prediction},
             connection_id,
@@ -148,7 +148,7 @@ async def price_stream(websocket: WebSocket):
                 pass
             
             # Get and send latest price
-            tick = redis_service.get("xauusd:tick:latest")
+            tick = await redis_manager.get("xauusd:tick:latest")
             if tick:
                 await websocket.send_json({
                     "type": "tick",
@@ -178,7 +178,7 @@ async def signal_stream(
     
     try:
         # Send current signal on connect
-        signal = redis_service.get("signal:latest")
+        signal = await redis_manager.get("signal:latest")
         if signal:
             await websocket.send_json({
                 "type": "signal",
